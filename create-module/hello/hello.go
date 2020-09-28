@@ -1,9 +1,10 @@
 package main
 
 import (
-	"example.com/greetings"
 	"fmt"
 	"log"
+
+	"example.com/greetings"
 )
 
 func main() {
@@ -13,7 +14,8 @@ func main() {
 	log.SetPrefix("greetings: ")
 	log.SetFlags(0)
 
-	message, err := greetings.Hello("")
+	names := []string{"Mike", "Harvey", "Rachel", "Donna"}
+	messages, err := greetings.Hellos("")
 	// If an error was returned, print it to the console
 	// and exit the program
 	if err != nil {
@@ -21,5 +23,5 @@ func main() {
 	}
 	// If no error was returned, print the returned message
 	// to the console.
-	fmt.Println(message)
+	fmt.Println(messages)
 }
