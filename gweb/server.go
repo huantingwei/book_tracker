@@ -20,8 +20,10 @@ func DemoServer() {
 	books := router.Group("/books")
 	{
 		books.POST("/add", addBook)
-		books.GET("/all", listBook)
-		books.GET("", getBook)
+		books.GET("", listBook)
+		books.GET("/get", getBookByID)
+		books.POST("/borrow", borrowBookByID)
+		books.POST("/return", returnBookByID)
 	}
 	router.Run(":8989")
 }

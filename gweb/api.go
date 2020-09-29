@@ -1,17 +1,26 @@
 package gweb
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 )
 
 func listBook(c *gin.Context) {
-	ListBook()
-	ResponseSuccess(c, 1)
+	id := c.Query("id")
+	name := c.Query("name")
+	author := c.Query("author")
+	filter := map[string]string{
+		"id":     id,
+		"name":   name,
+		"author": author,
+	}
+	books := ListBookWithFilter(filter)
+	ResponseSuccess(c, books)
 }
 
-func borrowBook(c *gin.Context) {
+func getBookByID(c *gin.Context) {
+	id := c.Query("id")
+	book := GetBookByID(id)
+	ResponseSuccess(c, book)
 }
 
 func addBook(c *gin.Context) {
@@ -25,6 +34,26 @@ func addBook(c *gin.Context) {
 		ResponseError(c, err)
 	}
 	ResponseSuccess(c, book)
+}
+
+func borrowBookByID(c *gin.Context) {
+	id := c.PostForm("id")
+	err := BorrowBookByID(id)
+	if err != nil {
+		ResponseError(c, err)
+	} else {
+		ResponseSuccess(c, nil)
+	}
+}
+
+func returnBookByID(c *gin.Context) {
+	id := c.PostForm("id")
+	err := ReturnBookByID(id)
+	if err != nil {
+		ResponseError(c, err)
+	} else {
+		ResponseSuccess(c, nil)
+	}
 }
 
 func login(c *gin.Context) {
@@ -41,11 +70,4 @@ func userProfile(c *gin.Context) {
 }
 
 func userSetting(c *gin.Context) {
-}
-
-func getBook(c *gin.Context) {
-	id := c.Query("id")
-	name := c.Query("name")
-	author := c.Query("author")
-	fmt.Println(id, name, author)
 }
