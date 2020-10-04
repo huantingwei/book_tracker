@@ -1,6 +1,6 @@
 package main
 
-import "github.com/huantingwei/go/gweb"
+import "github.com/huantingwei/go/tracker"
 
 // "context"
 // "fmt"
@@ -13,7 +13,7 @@ import "github.com/huantingwei/go/gweb"
 // "go.mongodb.org/mongo-driver/mongo/readpref"
 
 func main() {
-	gweb.DemoServer()
+	tracker.Server()
 	// client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false"))
 	// if err != nil {
 	// 	log.Fatal(err)
@@ -33,4 +33,20 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 	// fmt.Println(databases)
+
+	// r := gin.Default()
+	// store := cookie.NewStore([]byte("secret"))
+	// r.Use(sessions.Sessions("mysession", store))
+
+	// r.GET("/hello", func(c *gin.Context) {
+	// 	session := sessions.Default(c)
+
+	// 	if session.Get("hello") != "world" {
+	// 		session.Set("hello", "world")
+	// 		session.Save()
+	// 	}
+
+	// 	c.JSON(200, gin.H{"hello": session.Get("hello")})
+	// })
+	// r.Run(":8000")
 }
