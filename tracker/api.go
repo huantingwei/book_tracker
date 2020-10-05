@@ -1,6 +1,7 @@
 package tracker
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -33,7 +34,12 @@ func ListBook(c *gin.Context) {
 
 func GetBook(c *gin.Context) {
 	id := c.Param("bookid")
-	book, err := getBook(id)
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Invalid id")
+		ResponseFailure(c, err, 504)
+	}
+	book, err := getBook(oid)
 	if err != nil {
 		ResponseBadRequest(c, err)
 	} else {
@@ -64,8 +70,13 @@ func AddBook(c *gin.Context) {
 }
 
 func DeleteBook(c *gin.Context) {
-	id := c.PostFormArray("id")
-	deleteCount, err := deleteBook(id)
+	id := c.PostForm("id")
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Invalid id")
+		ResponseFailure(c, err, 504)
+	}
+	deleteCount, err := deleteBook(oid)
 	if err != nil {
 		ResponseBadRequest(c, err)
 	} else {
@@ -91,8 +102,87 @@ func EditBook(c *gin.Context) {
 	}
 }
 
-// func ListNote {}
-// func GetNote{}
-// func AddNote{}
-// func DeleteNote{}
-// func EditNote{}
+// Note
+func ListNoteByBook(c *gin.Context) {
+	id := c.Query("id")
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Invalid id")
+		ResponseFailure(c, err, 504)
+	}
+	notes, err := listNoteByBook(oid)
+	if err != nil {
+		ResponseBadRequest(c, err)
+	} else {
+		ResponseSuccess(c, notes)
+	}
+}
+
+func GetNote(c *gin.Context) {
+	id := c.Param("noteid")
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Invalid id")
+		ResponseFailure(c, err, 504)
+	}
+	note, err := getNote(oid)
+	if err != nil {
+		ResponseBadRequest(c, err)
+	} else {
+		ResponseSuccess(c, note)
+	}
+}
+
+func AddNote(c *gin.Context) {
+	id := c.PostForm("bookID")
+	content := c.PostForm("content")
+
+	bookID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Invalid id")
+		ResponseFailure(c, err, 504)
+	}
+	note := Note{
+		BookID:  bookID,
+		Content: content,
+	}
+
+	oid, err := addNote(bookID, &note)
+	if err != nil {
+		ResponseBadRequest(c, err)
+	}
+	ResponseSuccess(c, oid)
+}
+
+func DeleteNote(c *gin.Context) {
+	id := c.PostForm("id")
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Invalid id")
+		ResponseFailure(c, err, 504)
+	}
+	deleteCount, err := deleteNote(oid)
+	if err != nil {
+		ResponseBadRequest(c, err)
+	} else {
+		ResponseSuccess(c, deleteCount)
+	}
+}
+
+// func EditNote(c *gin.Context) {
+// 	fields := make(map[string]interface{})
+// 	fields["id"], _ = primitive.ObjectIDFromHex(c.Param("bookid"))
+// 	fields["title"] = c.PostForm("title")
+// 	fields["author"] = c.PostForm("author")
+// 	fields["status"], _ = strconv.Atoi(c.PostForm("status"))
+// 	fields["startTime"], _ = time.Parse(layoutISO, c.PostForm("startTime"))
+// 	fields["endTime"], _ = time.Parse(layoutISO, c.PostForm("endTime"))
+// 	fields["description"] = c.PostForm("description")
+
+// 	editCount, err := editNote(fields)
+// 	if err != nil {
+// 		ResponseBadRequest(c, err)
+// 	} else {
+// 		ResponseSuccess(c, editCount)
+// 	}
+// }

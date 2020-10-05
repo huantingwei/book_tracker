@@ -11,7 +11,6 @@ import (
 const (
 	db      = "tracker"
 	bookCol = "book"
-	noteCol = "note"
 )
 
 // Book
@@ -31,7 +30,6 @@ func listBook(query map[string]string) (books []Book, err error) {
 	if listAll == true {
 		cursor, err := collection.Find(ctx, bson.M{})
 		if err != nil {
-			fmt.Println("error 1")
 			log.Fatal(err)
 			return books, err
 		}
@@ -79,20 +77,14 @@ func listBook(query map[string]string) (books []Book, err error) {
 	}
 }
 
-func getBook(id string) (book Book, err error) {
+func getBook(bookID primitive.ObjectID) (book Book, err error) {
 	client, ctx, cancel := getConnection()
 	defer cancel()
 	defer client.Disconnect(ctx)
 
 	collection := client.Database(db).Collection(bookCol)
 
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Println("Invalid id")
-		return book, err
-	}
-
-	res := collection.FindOne(ctx, bson.M{"id": oid})
+	res := collection.FindOne(ctx, bson.M{"id": bookID})
 	res.Decode(&book)
 
 	return book, nil
@@ -116,26 +108,14 @@ func addBook(book *Book) (primitive.ObjectID, error) {
 	return oid, nil
 }
 
-func deleteBook(ids []string) (int, error) {
+func deleteBook(id primitive.ObjectID) (int, error) {
 	client, ctx, cancel := getConnection()
 	defer cancel()
 	defer client.Disconnect(ctx)
 
 	collection := client.Database(db).Collection(bookCol)
 
-	var oids bson.D
-	for _, id := range ids {
-		if id != "" {
-			oid, err := primitive.ObjectIDFromHex(id)
-			if err != nil {
-				log.Println("Invalid id")
-				return 0, err
-			}
-			oids = append(oids, bson.E{"id", oid})
-		}
-	}
-
-	res, err := collection.DeleteMany(ctx, oids)
+	res, err := collection.DeleteOne(ctx, bson.M{"id": id})
 	if err != nil {
 		log.Fatal(err)
 		return int(res.DeletedCount), err

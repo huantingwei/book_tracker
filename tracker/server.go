@@ -38,17 +38,17 @@ func Server() {
 		book.GET("", ListBook)
 		book.POST("", AddBook)
 		book.GET("/:bookid", GetBook)
-		book.DELETE("/:bookid", DeleteBook)
+		book.DELETE("", DeleteBook)
 		book.POST("/:bookid", EditBook)
 	}
 
-	// note := router.Group("/note")
-	// {
-	// 	note.GET("", ListNote)
-	// 	note.POST("", AddNote)
-	// 	note.GET("/:noteid", GetNote)
-	// 	note.DELETE("/:noteid", DeleteNote)
-	// 	note.POST("/:noteid", EditNote)
-	// }
+	note := router.Group("/note")
+	{
+		note.GET("", ListNoteByBook)
+		note.POST("", AddNote)
+		note.GET("/:noteid", GetNote)
+		note.DELETE("/:noteid", DeleteNote)
+		// note.POST("/:noteid", EditNote)
+	}
 	router.Run(":8989")
 }
