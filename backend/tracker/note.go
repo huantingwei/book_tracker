@@ -97,7 +97,6 @@ func listNoteByBook(bookID primitive.ObjectID) (notes []Note, err error) {
 	}
 
 	return notes, nil
-
 }
 
 func getNote(noteID primitive.ObjectID) (note Note, err error) {
@@ -129,7 +128,8 @@ func addNote(bookID primitive.ObjectID, note *Note) (primitive.ObjectID, error) 
 		log.Printf("Could not create Note: %v", err)
 		return primitive.NilObjectID, err
 	}
-	noteID := res.InsertedID.(primitive.ObjectID)
+	// default id
+	_ = res.InsertedID.(primitive.ObjectID)
 
 	// get the book's old note array
 	book, err := getBook(note.BookID)
@@ -139,7 +139,7 @@ func addNote(bookID primitive.ObjectID, note *Note) (primitive.ObjectID, error) 
 	}
 
 	oldNotes := book.Notes
-	oldNotes = append(oldNotes, noteID)
+	oldNotes = append(oldNotes, note.ID)
 
 	fields := make(map[string]interface{})
 	fields["id"] = bookID
@@ -149,25 +149,31 @@ func addNote(bookID primitive.ObjectID, note *Note) (primitive.ObjectID, error) 
 	_, err = editBook(fields)
 	if err != nil {
 		log.Printf("Could not link the note to the Book: %v", err)
-		_, _ = deleteNote(noteID)
+		_, _ = deleteNote(note.ID)
 		return primitive.NilObjectID, err
 	}
 
-	return noteID, nil
+	return note.ID, nil
 
 }
 
-func deleteNote(id primitive.ObjectID) (int, error) {
+func deleteNote(noteID primitive.ObjectID) (int, error) {
 	client, ctx, cancel := getConnection()
 	defer cancel()
 	defer client.Disconnect(ctx)
 
+	// get note
+	// get book
+	// delete note and book's note at the same time
 	collection := client.Database(db).Collection(noteCol)
 
-	res, err := collection.DeleteOne(ctx, bson.M{"id": id})
+	res, err := collection.DeleteOne(ctx, bson.M{"id": noteID})
 	if err != nil {
 		log.Fatal(err)
 		return int(res.DeletedCount), err
 	}
+
 	return int(res.DeletedCount), nil
 }
+
+// func deleteNoteFromBook(){}

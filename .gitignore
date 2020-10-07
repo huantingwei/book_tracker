@@ -1,0 +1,26 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+./frontend/book_tracker/node_modules
+./frontend/book_tracker/.pnp
+./frontend/book_tracker/.pnp.js
+
+# testing
+./frontend/book_tracker/coverage
+
+# production
+./frontend/book_tracker/build
+
+# misc
+./frontend/book_tracker/.DS_Store
+./frontend/book_tracker/.env.local
+./frontend/book_tracker/.env.development.local
+./frontend/book_tracker/.env.test.local
+./frontend/book_tracker/.env.production.local
+
+./frontend/book_tracker/npm-debug.log*
+./frontend/book_tracker/yarn-debug.log*
+./frontend/book_tracker/yarn-error.log*
+
+
+# other

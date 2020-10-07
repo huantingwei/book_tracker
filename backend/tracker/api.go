@@ -104,7 +104,7 @@ func EditBook(c *gin.Context) {
 
 // Note
 func ListNoteByBook(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Query("bookid")
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Println("Invalid id")
