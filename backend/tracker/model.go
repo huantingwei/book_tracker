@@ -20,6 +20,8 @@ type Book struct {
 type Note struct {
 	ID      primitive.ObjectID `json:"id"`
 	BookID  primitive.ObjectID `json:"bookID"`
+	// Title string `json:"Title"`
 	Content string             `json:"content"`
 	ReplyTo primitive.ObjectID `json:"replyTo"`
+	// CreateTime time.Time `json:"createTime"`
 }

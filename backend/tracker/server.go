@@ -1,6 +1,9 @@
 package tracker
 
 import (
+	"time"
+
+	"github.com/gin-gonic/contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,6 +35,18 @@ func Server() {
 	// 		"intro": "This is a library management system built with Gin and MongoDB!",
 	// 	})
 	// })
+
+	router.Use(cors.New(cors.Config{
+		// for dev
+		AllowAllOrigins: true,
+		// for prod
+		// AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "DELETE"},
+		AllowedHeaders:   []string{"Origin"},
+		ExposedHeaders:   []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	book := router.Group("/book")
 	{
