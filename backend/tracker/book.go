@@ -8,11 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-const (
-	db      = "tracker"
-	bookCol = "book"
-)
-
 // Book
 func listBook(query map[string]string) (books []Book, err error) {
 	client, ctx, cancel := getConnection()
@@ -30,7 +25,7 @@ func listBook(query map[string]string) (books []Book, err error) {
 	if listAll == true {
 		cursor, err := collection.Find(ctx, bson.M{})
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Could not get all books.\nError: %v", err)
 			return books, err
 		}
 		defer cursor.Close(ctx)
@@ -38,7 +33,7 @@ func listBook(query map[string]string) (books []Book, err error) {
 		for cursor.Next(ctx) {
 			var book Book
 			if err = cursor.Decode(&book); err != nil {
-				log.Fatal(err)
+				log.Printf("Could not decode this book.\nError: %v", err)
 				return books, err
 			} else {
 				books = append(books, book)
@@ -51,15 +46,15 @@ func listBook(query map[string]string) (books []Book, err error) {
 			if v != "" {
 				fmt.Println(v)
 				if err != nil {
-					log.Fatal(err)
+					log.Printf("Could not what?.\nError: %v", err)
 				}
-				filter = append(filter, bson.E{k, v})
+				filter = append(filter, bson.E{Key: k, Value: v})
 			}
 		}
 		cursor, err := collection.Find(ctx, filter)
 		if err != nil {
 			fmt.Println("error 1")
-			log.Fatal(err)
+			log.Printf("Could not get books with filter %v.\nError: %v", filter, err)
 			return books, err
 		}
 		defer cursor.Close(ctx)
@@ -67,7 +62,7 @@ func listBook(query map[string]string) (books []Book, err error) {
 		for cursor.Next(ctx) {
 			var book Book
 			if err = cursor.Decode(&book); err != nil {
-				log.Fatal(err)
+				log.Printf("Could not decode this book.\nError: %v", err)
 				return books, err
 			} else {
 				books = append(books, book)
@@ -99,27 +94,36 @@ func addBook(book *Book) (primitive.ObjectID, error) {
 
 	collection := client.Database(db).Collection(bookCol)
 
-	res, err := collection.InsertOne(ctx, book)
+	_, err := collection.InsertOne(ctx, book)
 	if err != nil {
 		log.Printf("Could not create Book: %v", err)
 		return primitive.NilObjectID, err
 	}
-	oid := res.InsertedID.(primitive.ObjectID)
-	return oid, nil
+
+	return book.ID, nil
 }
 
-func deleteBook(id primitive.ObjectID) (int, error) {
+func deleteBook(bookID primitive.ObjectID) (int, error) {
 	client, ctx, cancel := getConnection()
 	defer cancel()
 	defer client.Disconnect(ctx)
 
-	collection := client.Database(db).Collection(bookCol)
+	noteCollection := client.Database(db).Collection(noteCol)
+	bookCollection := client.Database(db).Collection(bookCol)
 
-	res, err := collection.DeleteOne(ctx, bson.M{"id": id})
+	// delete notes where note.bookID = bookID
+	if _, err := noteCollection.DeleteMany(ctx, bson.D{{Key: "bookid", Value: bookID}}); err != nil {
+		log.Printf("Could not remove book %v's notes.\nError: %v", bookID, err)
+		return -1, err
+	}
+
+	// delete Book
+	res, err := bookCollection.DeleteOne(ctx, bson.M{"id": bookID})
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Could not delete book %v.\nError: %v", bookID, err)
 		return int(res.DeletedCount), err
 	}
+
 	return int(res.DeletedCount), nil
 }
 
@@ -133,7 +137,7 @@ func editBook(fields map[string]interface{}) (int, error) {
 	var updateFields bson.D
 	for k, v := range fields {
 		if v != "" {
-			updateFields = append(updateFields, bson.E{k, v})
+			updateFields = append(updateFields, bson.E{Key: k, Value: v})
 		}
 	}
 
@@ -141,11 +145,11 @@ func editBook(fields map[string]interface{}) (int, error) {
 		ctx,
 		bson.M{"id": fields["id"]},
 		bson.D{
-			{"$set", updateFields},
+			{Key: "$set", Value: updateFields},
 		},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Could not edit book %v.\nError: %v", fields["id"], err)
 		return 0, err
 	}
 	return int(result.ModifiedCount), nil

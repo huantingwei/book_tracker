@@ -62,7 +62,7 @@ func Server() {
 		note.GET("", ListNoteByBook)
 		note.POST("", AddNote)
 		note.GET("/:noteid", GetNote)
-		note.DELETE("/:noteid", DeleteNote)
+		note.DELETE("", DeleteNote)
 		// note.POST("/:noteid", EditNote)
 	}
 	router.Run(":8989")

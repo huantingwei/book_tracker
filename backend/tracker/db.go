@@ -14,6 +14,9 @@ const (
 	// Timeout operations after N seconds
 	connectTimeout           = 5
 	connectionStringTemplate = "mongodb://%s:%s@%s"
+	db      = "tracker"
+	bookCol = "book"
+	noteCol = "note"
 )
 
 // GetConnection - Retrieves a client to the DocumentDB

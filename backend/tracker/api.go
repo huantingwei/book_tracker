@@ -54,6 +54,7 @@ func AddBook(c *gin.Context) {
 	startTime, _ := time.Parse(layoutISO, c.PostForm("startTime"))
 	endTime, _ := time.Parse(layoutISO, c.PostForm("endTime"))
 	description := c.PostForm("description")
+	notes := []primitive.ObjectID{}
 	book := Book{
 		Title:       title,
 		Author:      author,
@@ -61,6 +62,7 @@ func AddBook(c *gin.Context) {
 		StartTime:   startTime,
 		EndTime:     endTime,
 		Description: description,
+		Notes:       notes,
 	}
 	oid, err := addBook(&book)
 	if err != nil {
@@ -109,12 +111,15 @@ func ListNoteByBook(c *gin.Context) {
 	if err != nil {
 		log.Println("Invalid id")
 		ResponseFailure(c, err, 504)
+		return
 	}
 	notes, err := listNoteByBook(oid)
 	if err != nil {
 		ResponseBadRequest(c, err)
+		return
 	} else {
 		ResponseSuccess(c, notes)
+		return
 	}
 }
 
@@ -124,34 +129,43 @@ func GetNote(c *gin.Context) {
 	if err != nil {
 		log.Println("Invalid id")
 		ResponseFailure(c, err, 504)
+		return
 	}
 	note, err := getNote(oid)
 	if err != nil {
 		ResponseBadRequest(c, err)
+		return
 	} else {
 		ResponseSuccess(c, note)
+		return
 	}
 }
 
 func AddNote(c *gin.Context) {
 	id := c.PostForm("bookID")
 	content := c.PostForm("content")
+	title := c.PostForm("title")
+	// createTime := c.PostForm("createTime")
 
 	bookID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Println("Invalid id")
 		ResponseFailure(c, err, 504)
+		return
 	}
 	note := Note{
 		BookID:  bookID,
 		Content: content,
+		Title:   title,
 	}
 
 	oid, err := addNote(bookID, &note)
 	if err != nil {
 		ResponseBadRequest(c, err)
+		return
 	}
 	ResponseSuccess(c, oid)
+	return
 }
 
 func DeleteNote(c *gin.Context) {
@@ -160,12 +174,15 @@ func DeleteNote(c *gin.Context) {
 	if err != nil {
 		log.Println("Invalid id")
 		ResponseFailure(c, err, 504)
+		return
 	}
 	deleteCount, err := deleteNote(oid)
 	if err != nil {
 		ResponseBadRequest(c, err)
+		return
 	} else {
 		ResponseSuccess(c, deleteCount)
+		return
 	}
 }
 
