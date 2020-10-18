@@ -77,12 +77,15 @@ func DeleteBook(c *gin.Context) {
 	if err != nil {
 		log.Println("Invalid id")
 		ResponseFailure(c, err, 504)
+		return
 	}
 	deleteCount, err := deleteBook(oid)
 	if err != nil {
 		ResponseBadRequest(c, err)
+		return
 	} else {
 		ResponseSuccess(c, deleteCount)
+		return
 	}
 }
 
@@ -99,8 +102,10 @@ func EditBook(c *gin.Context) {
 	editCount, err := editBook(fields)
 	if err != nil {
 		ResponseBadRequest(c, err)
+		return
 	} else {
 		ResponseSuccess(c, editCount)
+		return
 	}
 }
 
@@ -186,20 +191,18 @@ func DeleteNote(c *gin.Context) {
 	}
 }
 
-// func EditNote(c *gin.Context) {
-// 	fields := make(map[string]interface{})
-// 	fields["id"], _ = primitive.ObjectIDFromHex(c.Param("bookid"))
-// 	fields["title"] = c.PostForm("title")
-// 	fields["author"] = c.PostForm("author")
-// 	fields["status"], _ = strconv.Atoi(c.PostForm("status"))
-// 	fields["startTime"], _ = time.Parse(layoutISO, c.PostForm("startTime"))
-// 	fields["endTime"], _ = time.Parse(layoutISO, c.PostForm("endTime"))
-// 	fields["description"] = c.PostForm("description")
+func EditNote(c *gin.Context) {
+	fields := make(map[string]interface{})
+	fields["id"], _ = primitive.ObjectIDFromHex(c.Param("noteid"))
+	fields["title"] = c.PostForm("title")
+	fields["content"] = c.PostForm("content")
 
-// 	editCount, err := editNote(fields)
-// 	if err != nil {
-// 		ResponseBadRequest(c, err)
-// 	} else {
-// 		ResponseSuccess(c, editCount)
-// 	}
-// }
+	editCount, err := editNote(fields)
+	if err != nil {
+		ResponseBadRequest(c, err)
+		return
+	} else {
+		ResponseSuccess(c, editCount)
+		return
+	}
+}

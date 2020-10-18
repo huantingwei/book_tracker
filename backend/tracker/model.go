@@ -7,7 +7,7 @@ import (
 )
 
 type Book struct {
-	ID          primitive.ObjectID   `json:"id"`
+	ID          primitive.ObjectID   `json:"id"` // cannot modify
 	Title       string               `json:"title"`
 	Author      string               `json:"author"`
 	Status      int                  `json:"status"`
@@ -18,9 +18,9 @@ type Book struct {
 }
 
 type Note struct {
-	ID         primitive.ObjectID `json:"id"`
-	BookID     primitive.ObjectID `json:"bookID"`
+	ID         primitive.ObjectID `json:"id"`     // cannot modify
+	BookID     primitive.ObjectID `json:"bookID"` // cannot modify
 	Title      string             `json:"Title"`
 	Content    string             `json:"content"`
-	CreateTime time.Time          `json:"createTime"`
+	CreateTime time.Time          `json:"createTime"` // cannot modify
 }

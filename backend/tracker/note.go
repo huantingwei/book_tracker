@@ -168,6 +168,34 @@ func deleteNote(noteID primitive.ObjectID) (int, error) {
 
 }
 
+func editNote(fields map[string]interface{}) (int, error) {
+	client, ctx, cancel := getConnection()
+	defer cancel()
+	defer client.Disconnect(ctx)
+
+	collection := client.Database(db).Collection(noteCol)
+
+	var updateFields bson.D
+	for k, v := range fields {
+		if v != "" {
+			updateFields = append(updateFields, bson.E{Key: k, Value: v})
+		}
+	}
+
+	result, err := collection.UpdateOne(
+		ctx,
+		bson.M{"id": fields["id"]},
+		bson.D{
+			{Key: "$set", Value: updateFields},
+		},
+	)
+	if err != nil {
+		log.Printf("Could not edit note %v.\nError: %v", fields["id"], err)
+		return 0, err
+	}
+	return int(result.ModifiedCount), nil
+}
+
 // WithTransaction
 /*
 func addNote(bookID primitive.ObjectID, note *Note) (interface{}, error) {
