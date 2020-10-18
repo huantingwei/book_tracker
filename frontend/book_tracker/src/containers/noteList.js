@@ -36,10 +36,10 @@ const NoteList = (props) => {
                             <Item key={note.id}>
                                 <Item.Content>
                                     <Item.Header as='a' onClick={() => handleNoteOnClick(note.id)}>
-                                        title of note
+                                        {note.title}
                                     </Item.Header>
                                     <Item.Meta>
-                                        <span>create time of note</span>
+                                        <span>{note.createTime}</span>
                                     </Item.Meta>
                                     <Item.Description>
                                         {note.content}

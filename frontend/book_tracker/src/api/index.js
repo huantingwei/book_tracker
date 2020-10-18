@@ -45,7 +45,26 @@ export default class API {
     static getBook(id) {
         return fetchData('GET', "/book/" + id)
     }
+    static addBook(data){
+        return fetchData('POST', "/book", data)
+    }
+    static deleteBook(data) {
+        return fetchData('DELETE', "/book", data)
+    }
+    static editBook(id, data) {
+        return fetchData('POST', "/book" + id, data)
+    }
     static getNote(id) {
         return fetchData('GET', "/note/" + id)
     }
+    static addNote(data){
+        return fetchData('POST', "/note", data)
+    }
+    static deleteNote(data) {
+        return fetchData('DELETE', "/note", data)
+    }
+    static editNote(id, data) {
+        return fetchData('POST', "/note" + id, data)
+    }
+    
 }

@@ -20,7 +20,7 @@ type Book struct {
 type Note struct {
 	ID         primitive.ObjectID `json:"id"`     // cannot modify
 	BookID     primitive.ObjectID `json:"bookID"` // cannot modify
-	Title      string             `json:"Title"`
+	Title      string             `json:"title"`
 	Content    string             `json:"content"`
 	CreateTime time.Time          `json:"createTime"` // cannot modify
 }

@@ -23,7 +23,7 @@ const Note = (props) => {
 
     return (
         <Container text>
-            <Header size='large'>note Title</Header>
+            <Header size='large'>{note.title}</Header>
             <p>
                 {note.content}
             </p>
