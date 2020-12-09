@@ -17,7 +17,7 @@ const (
 // Thanks to otraore for the code example
 // https://gist.github.com/otraore/4b3120aa70e1c1aa33ba78e886bb54f3
 
-func main() {
+func main_auth() {
 	r := engine()
 	r.Use(gin.Logger())
 	if err := engine().Run(":8080"); err != nil {
