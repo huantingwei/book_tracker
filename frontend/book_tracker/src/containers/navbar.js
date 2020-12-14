@@ -6,10 +6,12 @@ import {
     Link
 } from "react-router-dom"
 import { Menu } from 'semantic-ui-react'
-import BookList from 'containers/bookList'
-import NoteList from 'containers/noteList'
-import Note from 'containers/note'
-import Book from 'containers/book'
+import BookList from 'containers/book/bookList'
+import NoteList from 'containers/note/noteList'
+import Note from 'containers/note/note'
+import Book from 'containers/book/book'
+import BookInput from 'containers/book/bookInput'
+import NoteInput from 'containers/note/noteInput'
 
 const Navbar = (props) => {
     const [activeItem, setActiveItem] = useState(null)
@@ -35,10 +37,12 @@ const Navbar = (props) => {
                     <BookList />
                 </Route>
                 <Route exact path="/note">
-                    <NoteList />
+                    <NoteList noteIDs={[]} />
                 </Route>
                 <Route path="/note/:id" children={<Note />} />
                 <Route path="/book/:id" children={<Book />} />
+                <Route path="/newBook" children={<BookInput mode={'new'}/>} />
+                <Route path="/newNote" children={<NoteInput mode={'new'}/>} />
             </Switch>
         </Router>
     )
