@@ -7,12 +7,12 @@ import (
 )
 
 type Book struct {
-	ID          primitive.ObjectID   `json:"id"` // cannot modify
+	ID          interface{}          `json:"id"` // cannot modify
 	Title       string               `json:"title"`
 	Author      string               `json:"author"`
 	Status      int                  `json:"status"`
-	StartTime   time.Time            `json:"startTime"`
-	EndTime     time.Time            `json:"endTime"`
+	StartTime   interface{}          `json:"startTime"`
+	EndTime     interface{}          `json:"endTime"`
 	Notes       []primitive.ObjectID `json:"notes"`
 	Description string               `json:"description"`
 }
