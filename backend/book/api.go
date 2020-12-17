@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	m "github.com/huantingwei/go/models"
@@ -11,19 +12,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
 const layoutISO = "2006-01-02 15:04:05"
 
 type Service struct {
+	client         *mongo.Client
 	bookCollection *mongo.Collection
 	noteCollection *mongo.Collection
 }
 
 func NewService(r *gin.RouterGroup, db util.Database) {
 	s := &Service{
+		client:         db.Client,
 		bookCollection: db.Handle.Collection("book"),
+		noteCollection: db.Handle.Collection("note"),
 	}
+	r.GET("/test", s.transaction)
 
 	book := r.Group("/book")
 	{
@@ -139,23 +147,6 @@ func (s *Service) AddBook(c *gin.Context) {
 
 	var book m.Book
 	c.ShouldBindJSON(&book)
-	// title := c.PostForm("title")
-	// author := c.PostForm("author")
-	// status, _ := strconv.Atoi(c.PostForm("status"))
-	// startTime, _ := time.Parse(layoutISO, c.PostForm("startTime"))
-	// endTime, _ := time.Parse(layoutISO, c.PostForm("endTime"))
-	// description := c.PostForm("description")
-	// notes := []primitive.ObjectID{}
-
-	// book := m.Book{
-	// 	Title:       title,
-	// 	Author:      author,
-	// 	Status:      status,
-	// 	StartTime:   startTime,
-	// 	EndTime:     endTime,
-	// 	Description: description,
-	// 	Notes:       notes,
-	// }
 
 	// self generated id field
 	book.ID = primitive.NewObjectID()
@@ -185,7 +176,6 @@ func (s *Service) DeleteBook(c *gin.Context) {
 	}
 
 	// delete notes where note.bookID = bookID
-	// TODO: panicked
 	if _, err := s.noteCollection.DeleteMany(context.TODO(), bson.D{{Key: "bookid", Value: oid}}); err != nil {
 		log.Printf("Could not delete book %v's notes.\nError: %v", oid, err)
 		util.ResponseError(c, err)
@@ -212,27 +202,28 @@ func (s *Service) EditBook(c *gin.Context) {
 
 	fields := make(map[string]interface{})
 	c.ShouldBindJSON(&fields)
-	// fields["id"], _ = primitive.ObjectIDFromHex(c.Param("bookid"))
-	// fields["title"] = c.PostForm("title")
-	// fields["author"] = c.PostForm("author")
-	// fields["status"], _ = strconv.Atoi(c.PostForm("status"))
-	// fields["startTime"], _ = time.Parse(layoutISO, c.PostForm("startTime"))
-	// fields["endTime"], _ = time.Parse(layoutISO, c.PostForm("endTime"))
-	// fields["description"] = c.PostForm("description")
 
-	if str, ok := fields["id"].(string); ok {
-		oid, err := primitive.ObjectIDFromHex(str)
-		if err != nil {
-			log.Println("Invalid id")
-			util.ResponseError(c, err)
-			return
-		}
-		fields["id"] = oid
-	} else {
-		log.Println("Invalid id")
+	// convert to primitive.ObjectID
+	oid, err := strIdToPrimitive(fields["id"])
+	if err != nil {
 		util.ResponseError(c, fmt.Errorf("Invalid id"))
 		return
 	}
+	fields["id"] = oid
+
+	// if str, ok := fields["id"].(string); ok {
+	// 	oid, err := primitive.ObjectIDFromHex(str)
+	// 	if err != nil {
+	// 		log.Println("Invalid id")
+	// 		util.ResponseError(c, err)
+	// 		return
+	// 	}
+	// 	fields["id"] = oid
+	// } else {
+	// 	log.Println("Invalid id")
+	// 	util.ResponseError(c, fmt.Errorf("Invalid id"))
+	// 	return
+	// }
 
 	var updateFields bson.D
 	for k, v := range fields {
@@ -240,8 +231,9 @@ func (s *Service) EditBook(c *gin.Context) {
 			updateFields = append(updateFields, bson.E{Key: k, Value: v})
 		}
 	}
+	// TODO: the return data is not not updated
 	var updatedDocument bson.M
-	err := s.bookCollection.FindOneAndUpdate(
+	err = s.bookCollection.FindOneAndUpdate(
 		context.TODO(),
 		bson.D{{Key: "id", Value: fields["id"]}},
 		bson.D{
@@ -295,6 +287,8 @@ func (s *Service) ListNoteByBook(c *gin.Context) {
 	util.ResponseSuccess(c, notes)
 }
 
+// request POST "/api/v1/note/:noteid"
+// response: {...}
 func (s *Service) GetNote(c *gin.Context) {
 	id := c.Param("noteid")
 	// convert to primitiv.ObjectID
@@ -320,30 +314,18 @@ func (s *Service) GetNote(c *gin.Context) {
 
 }
 
+// request POST "/api/v1/note" json: {...}
+// response: { Success: true/false, Data: NOTE_ID }
 func (s *Service) AddNote(c *gin.Context) {
 
-	id := c.PostForm("bookID")
-	content := c.PostForm("content")
-	title := c.PostForm("title")
-
-	bookID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Println("Invalid id")
-		util.ResponseError(c, err)
-		return
-	}
-
-	note := m.Note{
-		BookID:  bookID,
-		Content: content,
-		Title:   title,
-	}
-
+	var note m.Note
+	c.ShouldBindJSON(&note)
 	note.ID = primitive.NewObjectID()
+	note.CreateTime = time.Now()
 
 	// append the noteID to the Book's `notes`
 	if _, err := s.bookCollection.UpdateOne(context.TODO(),
-		bson.M{"id": bookID},
+		bson.M{"id": note.BookID},
 		bson.D{{Key: "$push", Value: bson.D{{Key: "notes", Value: note.ID}}}}); err != nil {
 		log.Printf("Could not append note to book: %v", err)
 		util.ResponseError(c, err)
@@ -353,7 +335,10 @@ func (s *Service) AddNote(c *gin.Context) {
 	// insert note into noteCollection
 	if _, err := s.noteCollection.InsertOne(context.TODO(), note); err != nil {
 		log.Printf("Could not create Note: %v", err)
-		// TODO: remove from Book's notes
+		deleteOK := deleteNote(note.BookID, note.ID, s)
+		if deleteOK {
+			log.Printf("Remove this note from book %v\n", note.BookID)
+		}
 		util.ResponseError(c, err)
 		return
 	}
@@ -362,34 +347,28 @@ func (s *Service) AddNote(c *gin.Context) {
 
 }
 
+// request DELETE "/api/v1/note" json: {...}
+// response: { Success: true/false, Data: # of deleted note }
 func (s *Service) DeleteNote(c *gin.Context) {
 
-	id := c.PostForm("id")
-	// convert to primitiv.ObjectID
-	noteID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Println("Invalid id")
-		util.ResponseError(c, err)
-		return
-	}
+	var tempNote m.Note
+	c.ShouldBindJSON(&tempNote)
 
 	var note m.Note
 	// get note, to get bookID
-	res := s.noteCollection.FindOne(context.TODO(), bson.M{"id": noteID})
+	res := s.noteCollection.FindOne(context.TODO(), bson.M{"id": tempNote.ID})
 	res.Decode(&note)
 	bookID := note.BookID
 
 	// delete note from Book.notes
-	if _, err := s.bookCollection.UpdateOne(context.TODO(),
-		bson.M{"id": bookID},
-		bson.D{{Key: "$pull", Value: bson.D{{Key: "notes", Value: noteID}}}}); err != nil {
-		log.Printf("Could not delete note from book.\nError: %v", err)
-		util.ResponseError(c, err)
+	isDeleted := deleteNote(bookID, tempNote.ID, s)
+	if !isDeleted {
+		util.ResponseError(c, fmt.Errorf("Cannot remove note %v from book %v\n", tempNote.ID, bookID))
 		return
 	}
 
 	// delete note
-	delNoteRes, err := s.noteCollection.DeleteOne(context.TODO(), bson.M{"id": noteID})
+	delNoteRes, err := s.noteCollection.DeleteOne(context.TODO(), bson.M{"id": tempNote.ID})
 	if err != nil {
 		log.Printf("Could not delete Note.\nError: %v", err)
 		util.ResponseError(c, err)
@@ -402,9 +381,15 @@ func (s *Service) DeleteNote(c *gin.Context) {
 func (s *Service) EditNote(c *gin.Context) {
 
 	fields := make(map[string]interface{})
-	fields["id"], _ = primitive.ObjectIDFromHex(c.Param("noteid"))
-	fields["title"] = c.PostForm("title")
-	fields["content"] = c.PostForm("content")
+	c.ShouldBindJSON(&fields)
+
+	// convert to primitive.ObjectID
+	oid, err := strIdToPrimitive(fields["id"])
+	if err != nil {
+		util.ResponseError(c, fmt.Errorf("Invalid id"))
+		return
+	}
+	fields["id"] = oid
 
 	var updateFields bson.D
 	for k, v := range fields {
@@ -426,4 +411,69 @@ func (s *Service) EditNote(c *gin.Context) {
 		return
 	}
 	util.ResponseSuccess(c, int(res.ModifiedCount))
+}
+
+func (s *Service) transaction(c *gin.Context) {
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+	session, err := s.client.StartSession()
+	if err != nil {
+		fmt.Printf("can't start, err: %v\n", err)
+		panic(err)
+	}
+	defer session.EndSession(context.Background())
+	err = mongo.WithSession(context.Background(), session, func(sessionContext mongo.SessionContext) error {
+		if err = session.StartTransaction(txnOpts); err != nil {
+			fmt.Printf("1st: %v\n", err)
+			return err
+		}
+		result, err := s.bookCollection.InsertOne(
+			sessionContext,
+			m.Book{
+				Title:       "A Transaction Episode for the Ages",
+				Author:      "hello",
+				Status:      1,
+				Description: "description",
+				ID:          primitive.NewObjectID(),
+				Notes:       make([]primitive.ObjectID, 0),
+			},
+		)
+		if err != nil {
+			fmt.Printf("2nd: %v\n", err)
+			return err
+		}
+		fmt.Println(result.InsertedID)
+		result, err = s.bookCollection.InsertOne(
+			sessionContext,
+			m.Book{
+				Title:       "Transactions for All",
+				Author:      "second",
+				Status:      1,
+				Description: "description",
+				ID:          primitive.NewObjectID(),
+				Notes:       make([]primitive.ObjectID, 0),
+			},
+		)
+		if err != nil {
+			fmt.Printf("3rd: %v\n", err)
+			return err
+		}
+		if err = session.CommitTransaction(sessionContext); err != nil {
+			fmt.Printf("4th: %v\n", err)
+			return err
+		}
+		fmt.Println(result.InsertedID)
+		return nil
+	})
+	if err != nil {
+		if abortErr := session.AbortTransaction(context.Background()); abortErr != nil {
+			fmt.Printf("5th: %v\n", abortErr)
+			panic(abortErr)
+		}
+		fmt.Printf("6th: %v\n", err)
+		panic(err)
+	}
+	util.ResponseSuccess(c, "nice")
+
 }
